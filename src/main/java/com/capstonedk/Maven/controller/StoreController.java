@@ -23,16 +23,16 @@ public class StoreController {
         this.storeService = storeService;
     }
 
-    @GetMapping("/storelist")
-    public List<Store> getStoreList()
+    @GetMapping("/storelistAll")
+    public List<Store> storelistAll()
     {
         return storeService.readStores();
     }//전체 리스트
 
-    @GetMapping("/storelist{categoryId}")
-    public ResponseEntity<Store> CategoryStore(@PathVariable int categoryId) {
-        Store store = storeService.getCategoryStore(categoryId);
-        return ResponseEntity.ok(store);
+    @GetMapping("/storelist/category/{categoryId}")
+    public ResponseEntity<List<Store>> findByCategoryId(@PathVariable int categoryId) {
+        List<Store> stores = storeService.getStoresByCategoryId(categoryId);
+        return ResponseEntity.ok(stores);
     }
 
     @GetMapping("/storelist/{storeId}")

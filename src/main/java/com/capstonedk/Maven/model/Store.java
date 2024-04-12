@@ -26,9 +26,7 @@ public class Store {
     private float latitude;
     private float longitude;
     private float ratingAverage;
-    // Category 엔티티를 참조하도록 수정합니다.
-    @JoinColumn(name = "category_id")
-    private Locale.Category categoryId; // 한식 1, 중식 2, 양식 3, 일식 4
+    private int categoryId; // 한식 1, 중식 2, 양식 3, 일식 4
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String info;

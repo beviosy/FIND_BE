@@ -38,9 +38,8 @@ public class StoreService {
         return storeRepository.findAll();
     }
 
-    public Store getCategoryStore(int categoryId) {
-        Optional<Store> store = storeRepository.findByCategoryId(categoryId);
-        return store.orElseThrow(() -> new EmptyResultDataAccessException("Cannot find any store under the given category ID", 1));
+    public List<Store> getStoresByCategoryId(int categoryId) {
+        return storeRepository.findByCategoryId(categoryId);
     }
 
     public Store createStore(StoreCreationRequest request) {
