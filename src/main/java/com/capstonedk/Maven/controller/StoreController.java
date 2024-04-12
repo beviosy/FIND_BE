@@ -33,30 +33,30 @@ public class StoreController {
     public ResponseEntity<List<Store>> findByCategoryId(@PathVariable int categoryId) {
         List<Store> stores = storeService.getStoresByCategoryId(categoryId);
         return ResponseEntity.ok(stores);
-    }
+    }//카데고리로 조회
 
     @GetMapping("/storelist/{storeId}")
     public ResponseEntity<Store> findStore(@PathVariable Long storeId) {
         Store store = storeService.findStore(storeId);
         return ResponseEntity.ok(store);
-    }
+    }//맛집 아이디로 조회
 
-    @PostMapping("/storelist")
+    @PostMapping("/storelist/{storeId}")
     public ResponseEntity<Store> createStore(@RequestBody StoreCreationRequest request) {
         Store createdStore = storeService.createStore(request);
         return ResponseEntity.ok(createdStore);
-    }
+    }//맛집 생성
 
     @PatchMapping("/storelist/{storeId}")
     public ResponseEntity<Store> updateStore(@RequestBody StoreCreationRequest request, @PathVariable Long storeId) {
         Store updatedStore = storeService.updateStore(storeId, request);
         return ResponseEntity.ok(updatedStore);
-    }
+    }//맛집 수정
 
     @DeleteMapping("/storelist/{storeId}")
     public ResponseEntity<Void> deleteStore(@PathVariable Long storeId) {
         storeService.deleteStore(storeId);
         return ResponseEntity.ok().build();
     }
-}
+}//맛집 삭제
 
