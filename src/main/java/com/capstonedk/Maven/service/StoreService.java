@@ -84,7 +84,7 @@ public class StoreService {
         }
     }
 
-    private User findUser(Long userId) {
+    public User findUser(Long userId) {
         Optional<User> user = userRepository.findById(userId);
         return user.orElseThrow(() -> new EmptyResultDataAccessException("User not present in the database", 1));
     }
