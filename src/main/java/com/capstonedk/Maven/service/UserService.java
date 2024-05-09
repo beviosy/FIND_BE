@@ -6,16 +6,21 @@ import com.capstonedk.Maven.model.request.UserCreationRequest;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+
+    @Autowired
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     // User operations
 
@@ -42,5 +47,13 @@ public class UserService {
     public User findUser(Long userId) {
         Optional<User> user = userRepository.findById(userId);
         return user.orElseThrow(() -> new EmptyResultDataAccessException("User not present in the database", 1));
+    }
+
+    public Optional<User> loginUser(String loginId, String password) {
+        return userRepository.findByLoginIdAndPassword(loginId, password);
+    }
+
+    public Optional<User> findUserByLoginId(String loginId) {
+        return userRepository.findByLoginId(loginId);
     }
 }
