@@ -3,6 +3,7 @@ package com.capstonedk.Maven.controller;
 import com.capstonedk.Maven.model.Store;
 import com.capstonedk.Maven.model.request.StoreCreationRequest;
 import com.capstonedk.Maven.service.StoreService;
+import com.capstonedk.Maven.model.response.StoreInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,14 +28,18 @@ public class StoreController {
 
     @Operation(summary = "category ID로 맛집 찾기", description = "0: 전체, 1: 한식, 2: 중식, 3: 양식, 4: 일식")
     @GetMapping("/storelist/category/{categoryId}")
-    public ResponseEntity<List<Store>> findByCategoryId(@PathVariable int categoryId) {
+    public ResponseEntity<List<StoreInfo>> findByCategoryId(@PathVariable int categoryId) {
         List<Store> stores;
         if (categoryId == 0) {
             stores = storeService.readStores();
         } else {
             stores = storeService.getStoresByCategoryId(categoryId);
         }
-        return ResponseEntity.ok(stores);
+        List<StoreInfo> storeInfos = new ArrayList<>();
+        for (Store store : stores) {
+            storeInfos.add(new StoreInfo(store.getStoreName(), store.getInfo()));
+        }
+        return ResponseEntity.ok(storeInfos);
     }
 
     @Operation(summary = "store ID로 맛집 찾기", description = "맛집 상세정보 제공")
