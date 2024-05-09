@@ -46,6 +46,21 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(@PathVariable("userId") Long userId, @RequestBody UserCreationRequest request) {
         try {
+            // 기존 사용자의 로그인 ID 가져오기
+            User existingUser = userService.findUser(userId);
+            String existingLoginId = existingUser.getLoginId();
+
+            // 수정할 로그인 ID가 기존 사용자의 로그인 ID와 중복되는지 확인
+            if (!existingLoginId.equals(request.getLoginId())) {
+                // 수정할 로그인 ID와 기존 사용자의 로그인 ID가 다르면 중복되지 않는 것 확인
+                Optional<User> existingUserWithNewLoginId = userService.findUserByLoginId(request.getLoginId());
+                if (existingUserWithNewLoginId.isPresent()) {
+                    // 수정할 로그인 ID가 이미 존재하는 경우 수정 거부
+                    return ResponseEntity.status(HttpStatus.CONFLICT).build();
+                }
+            }
+
+            // 중복된 로그인 ID가 없는 경우 사용자 정보 수정 수행
             User user = userService.updateUser(userId, request);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
