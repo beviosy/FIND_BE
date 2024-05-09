@@ -14,7 +14,7 @@ public class ReviewCreationRequest {
     private Store storeId;
     private int rating;
     private String content;
-    private Instant created_date;
-    private Instant modified_date;
+    private Instant createdDate;
+    private Instant modifiedDate;
 
 }
