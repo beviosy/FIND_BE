@@ -113,23 +113,26 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(
             @PathVariable("userId") Long userId,
-            @Valid @RequestBody UserCreationRequest request) {
+            @Parameter(description = "아이디", required = true) @RequestParam String loginId,
+            @Parameter(description = "비밀번호  최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함", required = true) @RequestParam String password,
+            @Parameter(description = "닉네임", required = true) @RequestParam String nickname,
+            @Parameter(description = "이메일", required = true) @RequestParam String email) {
         try {
             // 사용자 요청 객체 생성
-            UserCreationRequest userRequest = new UserCreationRequest();
-            userRequest.setLoginId(request.getLoginId());
-            userRequest.setPassword(request.getPassword());
-            userRequest.setNickname(request.getNickname());
-            userRequest.setEmail(request.getEmail());
+            UserCreationRequest request = new UserCreationRequest();
+            request.setLoginId(loginId);
+            request.setPassword(password);
+            request.setNickname(nickname);
+            request.setEmail(email);
 
             // 중복 검사
-            ResponseEntity<User> response = validateUserRequest(userRequest);
+            ResponseEntity<User> response = validateUserRequest(request);
             if (response != null) {
                 return response;
             }
 
             // 비밀번호 해시화
-            String hashedPassword = passwordEncoder.encode(request.getPassword());
+            String hashedPassword = passwordEncoder.encode(password);
             request.setPassword(hashedPassword);
 
             // 사용자 정보 수정 수행
@@ -139,7 +142,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
     @Operation(summary = "사용자 삭제", description = "특정 사용자 삭제")
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable("userId") Long userId) {
