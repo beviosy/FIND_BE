@@ -16,8 +16,6 @@ public class ReviewService {
     public Review createReview(ReviewCreationRequest request) {
         Review review = new Review();
         BeanUtils.copyProperties(request, review);
-        // ReviewId 자동 증가
-        review.setReviewId(reviewRepository.count() + 1);
         Review savedReview = reviewRepository.save(review);
         return savedReview;
     }

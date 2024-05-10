@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,55 +30,6 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록하여 회원가입 진행")
-    @PostMapping("/register")
-    public ResponseEntity<User> createUser(
-            @Parameter(description = "아이디", required = true) @RequestParam String loginId,
-            @Parameter(description = "비밀번호  최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함", required = true) @RequestParam String password,
-            @Parameter(description = "닉네임", required = true) @RequestParam String nickname,
-            @Parameter(description = "이메일", required = true) @RequestParam String email) {
-        try {
-            // 비밀번호 규칙 검사
-            if (!isValidPassword(password)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-            }
-
-            // 이메일 형식 검사
-            if (!isValidEmail(email)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-            }
-
-            // 닉네임 중복 검사
-            if (userService.findUserByNickname(nickname).isPresent()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
-            }
-
-            // 이메일 중복 검사
-            if (userService.findUserByEmail(email).isPresent()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
-            }
-
-            UserCreationRequest request = new UserCreationRequest();
-            request.setLoginId(loginId);
-            request.setPassword(password);
-            request.setNickname(nickname);
-            request.setEmail(email);
-
-            // 중복된 로그인 ID가 있는지 확인
-            boolean existingUser = userService.findUserByLoginId(request.getLoginId()).isPresent();
-            if (existingUser) {
-                // 중복된 로그인 ID가 이미 존재하는 경우 회원가입 거부
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
-            }
-
-            // 중복된 로그인 ID가 없는 경우 사용자 등록 수행
-            User user = userService.createUser(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(user);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-    }
-
     // 비밀번호 유효성 검사 메서드
     private boolean isValidPassword(String password) {
         // 최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함
@@ -98,22 +48,91 @@ public class UserController {
         return matcher.matches();
     }
 
+    // 중복 코드를 처리하는 메서드
+    private ResponseEntity<User> validateUserRequest(UserCreationRequest request) {
+        // 비밀번호 규칙 검사
+        if (!isValidPassword(request.getPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
 
-    @Operation(summary = "사용자 정보 수정", description = "기존 사용자의 정보 수정")
-    @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUser(
-            @PathVariable("userId") Long userId,
-            @RequestParam String loginId,
-            @RequestParam String password,
-            @RequestParam String nickname,
-            @RequestParam String email) {
+        // 이메일 형식 검사
+        if (!isValidEmail(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        // 닉네임 중복 검사
+        if (userService.findUserByNickname(request.getNickname()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        }
+
+        // 이메일 중복 검사
+        if (userService.findUserByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        }
+
+        return null;
+    }
+
+    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록하여 회원가입 진행")
+    @PostMapping("/register")
+    public ResponseEntity<User> createUser(
+            @Parameter(description = "아이디", required = true) @RequestParam String loginId,
+            @Parameter(description = "비밀번호  최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함", required = true) @RequestParam String password,
+            @Parameter(description = "닉네임", required = true) @RequestParam String nickname,
+            @Parameter(description = "이메일", required = true) @RequestParam String email) {
         try {
+            // 사용자 요청 객체 생성
             UserCreationRequest request = new UserCreationRequest();
             request.setLoginId(loginId);
             request.setPassword(password);
             request.setNickname(nickname);
             request.setEmail(email);
 
+            // 중복 검사
+            ResponseEntity<User> response = validateUserRequest(request);
+            if (response != null) {
+                return response;
+            }
+
+            // 중복된 로그인 ID가 있는지 확인
+            boolean existingUser = userService.findUserByLoginId(request.getLoginId()).isPresent();
+            if (existingUser) {
+                // 중복된 로그인 ID가 이미 존재하는 경우 회원가입 거부
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+            }
+
+            // 사용자 등록 수행
+            User user = userService.createUser(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @Operation(summary = "사용자 정보 수정", description = "기존 사용자의 정보를 수정합니다.")
+    @PutMapping("/{userId}")
+    public ResponseEntity<User> updateUser(
+            @PathVariable("userId") Long userId,
+            @Valid @RequestBody UserCreationRequest request) {
+        try {
+            // 사용자 요청 객체 생성
+            UserCreationRequest userRequest = new UserCreationRequest();
+            userRequest.setLoginId(request.getLoginId());
+            userRequest.setPassword(request.getPassword());
+            userRequest.setNickname(request.getNickname());
+            userRequest.setEmail(request.getEmail());
+
+            // 중복 검사
+            ResponseEntity<User> response = validateUserRequest(userRequest);
+            if (response != null) {
+                return response;
+            }
+
+            // 비밀번호 해시화
+            String hashedPassword = passwordEncoder.encode(request.getPassword());
+            request.setPassword(hashedPassword);
+
+            // 사용자 정보 수정 수행
             User user = userService.updateUser(userId, request);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
@@ -151,4 +170,3 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 }
-
