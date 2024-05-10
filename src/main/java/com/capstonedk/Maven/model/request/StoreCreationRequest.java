@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class StoreCreationRequest {
-    private Long storeId;
     private String storePictureUrl;
     private String storeName;
     private String storeAddress;

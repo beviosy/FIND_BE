@@ -8,8 +8,6 @@ import java.time.Instant;
 
 @Data
 public class ReviewCreationRequest {
-
-    private Long reviewId;
     private User userId;
     private Store storeId;
     private int rating;

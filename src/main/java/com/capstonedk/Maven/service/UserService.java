@@ -41,8 +41,6 @@ public class UserService implements UserDetailsService {
     public User createUser(UserCreationRequest request) {
         User user = new User();
         BeanUtils.copyProperties(request, user);
-        // userId 자동 증가
-        user.setUserId(userRepository.count() + 1);
         return userRepository.save(user);
     }
 
