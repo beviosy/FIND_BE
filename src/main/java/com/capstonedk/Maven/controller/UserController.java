@@ -84,7 +84,7 @@ public class UserController {
             // 사용자 요청 객체 생성
             UserCreationRequest request = new UserCreationRequest();
             request.setLoginId(loginId);
-            request.setPassword(password);
+            request.setPassword(passwordEncoder.encode(password)); // 비밀번호 해시화하여 저장
             request.setNickname(nickname);
             request.setEmail(email);
 
@@ -107,6 +107,19 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+
+    @Operation(summary = "사용자 로그인", description = "사용자 로그인을 수행하여 성공시 사용자 정보 반환")
+    @PostMapping("/login")
+    public ResponseEntity<User> loginUser(@RequestParam String loginId, @RequestParam String password) {
+        Optional<User> userOptional = userService.findUserByLoginId(loginId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return ResponseEntity.ok(user);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(summary = "사용자 정보 수정", description = "기존 사용자의 정보를 수정합니다.")
@@ -142,6 +155,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
     @Operation(summary = "사용자 삭제", description = "특정 사용자 삭제")
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable("userId") Long userId) {
@@ -162,13 +176,5 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @Operation(summary = "사용자 로그인", description = "사용자 로그인을 수행하여 성공시 사용자 정보 반환")
-    @PostMapping("/login")
-    public ResponseEntity<User> loginUser(@RequestParam String loginId, @RequestParam String password) {
-        Optional<User> userOptional = userService.loginUser(loginId, password);
-        return userOptional.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 }
