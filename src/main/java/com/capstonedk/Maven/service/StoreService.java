@@ -33,6 +33,9 @@ public class StoreService {
     public Store createStore(StoreCreationRequest request) {
         Store store = new Store();
         BeanUtils.copyProperties(request, store);
+        // StoreId 자동 증가
+        store.setStoreId(storeRepository.count() + 1);
+        store.setRatingAverage((float)0.0);
         return storeRepository.save(store);
     }
 
