@@ -4,6 +4,7 @@ import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.service.UserService;
 import com.capstonedk.Maven.model.request.UserCreationRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,38 +48,25 @@ public class UserController {
         return matcher.matches();
     }
 
-    // 아이디 중복 검사 메서드
-    private boolean isIdDuplicate(String loginId) {
-        Optional<User> existingUser = userService.findUserByLoginId(loginId);
-        return existingUser.isPresent();
-    }
-
-    // 닉네임 중복 검사 메서드
-    private boolean isNicknameDuplicate(String nickname) {
-        Optional<User> existingUser = userService.findUserByNickname(nickname);
-        return existingUser.isPresent();
-    }
-
-    // 이메일 중복 검사 메서드
-    private boolean isEmailDuplicate(String email) {
-        Optional<User> existingUser = userService.findUserByEmail(email);
-        return existingUser.isPresent();
-    }
-
     // 회원가입 요청의 유효성 검사 및 비밀번호 해싱 메서드
     private ResponseEntity<User> validateAndHashPassword(UserCreationRequest request) {
+        // 이메일 형식 검사
+        if (!isValidEmail(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
         // 아이디 중복 검사
-        if (isIdDuplicate(request.getLoginId())) {
+        if (userService.findUserByLoginId(request.getLoginId()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
 
         // 닉네임 중복 검사
-        if (isNicknameDuplicate(request.getNickname())) {
+        if (userService.findUserByNickname(request.getNickname()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
 
         // 이메일 중복 검사
-        if (isEmailDuplicate(request.getEmail())) {
+        if (userService.findUserByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
 
@@ -96,8 +84,19 @@ public class UserController {
 
     @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록하여 회원가입 진행")
     @PostMapping("/register")
-    public ResponseEntity<User> createUser(@Valid @RequestBody UserCreationRequest request) {
+    public ResponseEntity<User> createUser(
+            @Parameter(description = "아이디", required = true) @RequestParam String loginId,
+            @Parameter(description = "비밀번호  최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함", required = true) @RequestParam String password,
+            @Parameter(description = "닉네임", required = true) @RequestParam String nickname,
+            @Parameter(description = "이메일", required = true) @RequestParam String email) {
         try {
+            // 사용자 요청 객체 생성
+            UserCreationRequest request = new UserCreationRequest();
+            request.setLoginId(loginId);
+            request.setPassword(password);
+            request.setNickname(nickname);
+            request.setEmail(email);
+
             // 유효성 검사 및 비밀번호 해싱
             ResponseEntity<User> response = validateAndHashPassword(request);
             if (response != null) {
@@ -112,14 +111,31 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "사용자 정보 수정", description = "기존 사용자의 정보를 수정합니다.")
+    @Operation(summary = "사용자 정보 수정", description = "기존 사용자의 정보 수정")
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(
             @PathVariable("userId") Long userId,
-            @Valid @RequestBody UserCreationRequest request) {
+            @Parameter(description = "아이디", required = true) @RequestParam String loginId,
+            @Parameter(description = "비밀번호  최소 8자 이상, 대문자와 소문자, 숫자, 특수 문자를 포함해야 함", required = true) @RequestParam String password,
+            @Parameter(description = "닉네임", required = true) @RequestParam String nickname,
+            @Parameter(description = "이메일", required = true) @RequestParam String email) {
         try {
-            // 비밀번호가 변경되었는지 확인
-            User existingUser = userService.findUser(userId);
+            // 사용자 요청 객체 생성
+            UserCreationRequest request = new UserCreationRequest();
+            request.setLoginId(loginId);
+            request.setPassword(password);
+            request.setNickname(nickname);
+            request.setEmail(email);
+
+            // 비밀번호 유효성 및 이메일 형식 검사
+            ResponseEntity<User> response = validateAndHashPassword(request);
+            if (response != null) {
+                return response;
+            }
+
+            // 비밀번호 해싱
+            String hashedPassword = passwordEncoder.encode(password);
+            request.setPassword(hashedPassword);
 
             // 사용자 정보 수정 수행
             User user = userService.updateUser(userId, request);
@@ -129,18 +145,6 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "사용자 로그인", description = "사용자 로그인을 수행하여 성공시 사용자 정보 반환")
-    @PostMapping("/login")
-    public ResponseEntity<User> loginUser(@RequestParam String loginId, @RequestParam String password) {
-        Optional<User> userOptional = userService.findUserByLoginId(loginId);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (passwordEncoder.matches(password, user.getPassword())) {
-                return ResponseEntity.ok(user);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
 
     @Operation(summary = "사용자 삭제", description = "특정 사용자 삭제")
     @DeleteMapping("/{userId}")
@@ -162,5 +166,18 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @Operation(summary = "사용자 로그인", description = "사용자 로그인을 수행하여 성공시 사용자 정보 반환")
+    @PostMapping("/login")
+    public ResponseEntity<User> loginUser(@RequestParam String loginId, @RequestParam String password) {
+        Optional<User> userOptional = userService.findUserByLoginId(loginId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return ResponseEntity.ok(user);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
