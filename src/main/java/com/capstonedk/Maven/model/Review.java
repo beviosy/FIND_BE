@@ -13,6 +13,7 @@ import lombok.Setter;
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id") // review_id와 매핑되는 데이터베이스 열을 지정합니다.
     private Long reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,5 +33,4 @@ public class Review {
 
     private Instant createdDate;
     private Instant modifiedDate;
-
 }
