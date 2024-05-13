@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class StoreInfo {
+    private String storePictureUrl;
     private String storeName;
     private String info;
 }//이름과 간단 정보만 나오게 수정"

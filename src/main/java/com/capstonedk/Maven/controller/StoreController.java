@@ -34,13 +34,13 @@ public class StoreController {
             // 전체 가게 정보를 가져와서 StoreInfo로 변환
             List<Store> stores = storeService.readStores();
             storeInfos = stores.stream()
-                    .map(store -> new StoreInfo(store.getStoreName(), store.getInfo()))
+                    .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
                     .collect(Collectors.toList());
         } else {
             // 해당 카테고리에 속하는 가게 정보를 가져와서 StoreInfo로 변환
             List<Store> stores = storeService.getStoresByCategoryId(categoryId);
             storeInfos = stores.stream()
-                    .map(store -> new StoreInfo(store.getStoreName(), store.getInfo()))
+                    .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
                     .collect(Collectors.toList());
         }
         return ResponseEntity.ok(storeInfos);
