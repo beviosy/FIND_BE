@@ -2,6 +2,7 @@ package com.capstonedk.Maven.controller;
 
 import com.capstonedk.Maven.model.Store;
 import com.capstonedk.Maven.model.request.StoreCreationRequest;
+import com.capstonedk.Maven.model.response.StoreInfo; // StoreInfo 추가
 import com.capstonedk.Maven.service.StoreService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors; // 추가
 
 @RestController
 @RequestMapping("/api/store")
@@ -26,14 +28,22 @@ public class StoreController {
 
     @Operation(summary = "category ID로 맛집 찾기", description = "0: 전체, 1: 한식, 2: 중식, 3: 양식, 4: 일식")
     @GetMapping("/storelist/category/{categoryId}")
-    public ResponseEntity<List<Store>> findByCategoryId(@PathVariable int categoryId) {
-        List<Store> stores;
+    public ResponseEntity<List<StoreInfo>> findByCategoryId(@PathVariable int categoryId) {
+        List<StoreInfo> storeInfos;
         if (categoryId == 0) {
-            stores = storeService.readStores();
+            // 전체 가게 정보를 가져와서 StoreInfo로 변환
+            List<Store> stores = storeService.readStores();
+            storeInfos = stores.stream()
+                    .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
+                    .collect(Collectors.toList());
         } else {
-            stores = storeService.getStoresByCategoryId(categoryId);
+            // 해당 카테고리에 속하는 가게 정보를 가져와서 StoreInfo로 변환
+            List<Store> stores = storeService.getStoresByCategoryId(categoryId);
+            storeInfos = stores.stream()
+                    .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
+                    .collect(Collectors.toList());
         }
-        return ResponseEntity.ok(stores);
+        return ResponseEntity.ok(storeInfos);
     }
 
     @Operation(summary = "store ID로 맛집 찾기", description = "맛집 상세정보 제공")
