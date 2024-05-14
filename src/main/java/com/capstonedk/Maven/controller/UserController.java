@@ -2,7 +2,6 @@ package com.capstonedk.Maven.controller;
 
 import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.model.request.LoginRequest;
-import com.capstonedk.Maven.model.request.RegisterRequest;
 import com.capstonedk.Maven.model.response.ApiResponse;
 import com.capstonedk.Maven.model.response.LoginResponse;
 import com.capstonedk.Maven.service.UserService;
@@ -26,9 +25,12 @@ public class UserController {
 
     @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 비밀번호는 최소 8자 이상이어야 하며, 영문 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.")
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResponse> registerUser(
+            @RequestParam String loginId,
+            @RequestParam String password,
+            @RequestParam String nickname) {
         try {
-            User user = userService.createUser(registerRequest.getLoginId(), registerRequest.getPassword(), registerRequest.getNickname());
+            User user = userService.createUser(loginId, password, nickname);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "User created successfully", user));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "USER_CREATION_FAILED", e.getMessage(), null));
@@ -58,9 +60,11 @@ public class UserController {
 
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> loginUser(
+            @RequestParam String loginId,
+            @RequestParam String password) {
         try {
-            LoginResponse response = userService.login(loginRequest);
+            LoginResponse response = userService.login(new LoginRequest(loginId, password));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "LOGIN_FAILED", null, "Invalid login credentials"));
@@ -85,13 +89,15 @@ public class UserController {
     @PutMapping("/update")
     public ResponseEntity<User> updateUser(
             HttpServletRequest request,
-            @RequestBody RegisterRequest registerRequest) {
+            @RequestParam String loginId,
+            @RequestParam String password,
+            @RequestParam String nickname) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
             if (existingUser.isPresent()) {
-                User updatedUser = userService.updateUser(existingUser.get().getUserId(), registerRequest.getLoginId(), registerRequest.getPassword(), registerRequest.getNickname());
+                User updatedUser = userService.updateUser(existingUser.get().getUserId(), loginId, password, nickname);
                 return ResponseEntity.ok(updatedUser);
             }
         }
