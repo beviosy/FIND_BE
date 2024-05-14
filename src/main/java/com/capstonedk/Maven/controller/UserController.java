@@ -96,7 +96,7 @@ public class UserController {
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
-            if (existingUser.isPresent()) {
+            if (existingUser.isPresent() && existingUser.get().getLoginId().equals(loginId)) {
                 User updatedUser = userService.updateUser(existingUser.get().getUserId(), loginId, password, nickname);
                 return ResponseEntity.ok(updatedUser);
             }
