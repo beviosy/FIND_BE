@@ -18,7 +18,6 @@ public class User {
     private String loginId;
     private String password;
     private String nickname;
-    private String email;
 
     @OneToMany(mappedBy = "user")
     private List<Review> reviews;
