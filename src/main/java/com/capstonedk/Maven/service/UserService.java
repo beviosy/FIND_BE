@@ -10,6 +10,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -51,7 +53,7 @@ public class UserService implements UserDetailsService {
 
         User user = new User();
         user.setLoginId(loginId);
-        user.setPassword(password);
+        user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
         return userRepository.save(user);
     }
@@ -72,7 +74,7 @@ public class UserService implements UserDetailsService {
         }
 
         user.setLoginId(loginId);
-        user.setPassword(password);
+        user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
         return userRepository.save(user);
     }
@@ -88,10 +90,6 @@ public class UserService implements UserDetailsService {
     public User findUser(Long userId) {
         Optional<User> user = userRepository.findById(userId);
         return user.orElseThrow(() -> new EmptyResultDataAccessException("데이터베이스에 사용자가 없습니다", 1));
-    }
-
-    public Optional<User> loginUser(String loginId, String password) {
-        return userRepository.findByLoginIdAndPassword(loginId, password);
     }
 
     public Optional<User> findUserByLoginId(String loginId) {
@@ -123,8 +121,8 @@ public class UserService implements UserDetailsService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        Optional<User> userOptional = userRepository.findByLoginIdAndPassword(request.getLoginId(), request.getPassword());
-        if (userOptional.isEmpty()) {
+        Optional<User> userOptional = userRepository.findByLoginId(request.getLoginId());
+        if (userOptional.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOptional.get().getPassword())) {
             throw new UsernameNotFoundException("Invalid loginId or password");
         }
 
@@ -136,4 +134,3 @@ public class UserService implements UserDetailsService {
         return new LoginResponse(true, "LOGIN_SUCCESS", tokens, "로그인에 성공했습니다.");
     }
 }
-

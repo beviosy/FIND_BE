@@ -5,8 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class LoginResponse {
     private boolean success;
     private String code;
@@ -14,8 +14,8 @@ public class LoginResponse {
     private String message;
 
     @Data
-    @NoArgsConstructor
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class Tokens {
         private String accessToken;
         private String refreshToken;
