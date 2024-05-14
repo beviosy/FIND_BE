@@ -38,7 +38,7 @@ public class UserService {
 
         User user = new User();
         user.setLoginId(loginId);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(password));  // 비밀번호 해싱
         user.setNickname(nickname);
         return userRepository.save(user);
     }
@@ -59,7 +59,7 @@ public class UserService {
         }
 
         user.setLoginId(loginId);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(password));  // 비밀번호 해싱
         user.setNickname(nickname);
         return userRepository.save(user);
     }

@@ -1,7 +1,9 @@
 package com.capstonedk.Maven.util;
 
 import com.capstonedk.Maven.model.User;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,49 +14,51 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final SecretKey secretKey;
-
     @Value("${jwt.accessToken.expiration}")
     private long accessTokenExpiration;
 
     @Value("${jwt.refreshToken.expiration}")
     private long refreshTokenExpiration;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
-        if (secret.length() < 32) {
-            throw new IllegalArgumentException("The JWT secret key must be at least 32 characters long.");
-        }
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    private final SecretKey secretKey;
+
+    public JwtUtil() {
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(user.getLoginId(), accessTokenExpiration);
+        return Jwts.builder()
+                .setSubject(user.getLoginId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(secretKey)
+                .compact();
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user.getLoginId(), refreshTokenExpiration);
+        return Jwts.builder()
+                .setSubject(user.getLoginId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(secretKey)
+                .compact();
     }
 
-    private String generateToken(String subject, long expirationTime) {
-        return Jwts.builder()
-                .setSubject(subject)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
-                .compact();
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
-    }
-
-    public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
-        return claims.getSubject();
     }
 }
