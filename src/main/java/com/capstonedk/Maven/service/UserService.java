@@ -7,6 +7,9 @@ import com.capstonedk.Maven.model.response.LoginResponse;
 import com.capstonedk.Maven.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +20,23 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByLoginId(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 username을 가진 사용자를 찾을 수 없습니다: " + username));
+
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getLoginId())
+                .password(user.getPassword())
+                .roles("USER")
+                .build();
+    }
 
     public User createUser(String loginId, String password, String nickname) {
         if (isLoginIdDuplicate(loginId)) {
@@ -38,7 +53,7 @@ public class UserService {
 
         User user = new User();
         user.setLoginId(loginId);
-        user.setPassword(passwordEncoder.encode(password));  // 비밀번호 해싱
+        user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
         return userRepository.save(user);
     }
@@ -59,7 +74,7 @@ public class UserService {
         }
 
         user.setLoginId(loginId);
-        user.setPassword(passwordEncoder.encode(password));  // 비밀번호 해싱
+        user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
         return userRepository.save(user);
     }
@@ -108,7 +123,7 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         Optional<User> userOptional = userRepository.findByLoginId(request.getLoginId());
         if (userOptional.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOptional.get().getPassword())) {
-            throw new IllegalArgumentException("Invalid loginId or password");
+            throw new UsernameNotFoundException("Invalid loginId or password");
         }
 
         User user = userOptional.get();

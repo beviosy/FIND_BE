@@ -1,19 +1,25 @@
 package com.capstonedk.Maven.controller;
 
+import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.model.request.LoginRequest;
 import com.capstonedk.Maven.model.request.RegisterRequest;
+import com.capstonedk.Maven.model.request.UpdateUserRequest;
 import com.capstonedk.Maven.model.response.ApiResponse;
 import com.capstonedk.Maven.model.response.LoginResponse;
+import com.capstonedk.Maven.model.response.UserProfileResponse;
+import com.capstonedk.Maven.service.ReviewService;
 import com.capstonedk.Maven.service.UserService;
 import com.capstonedk.Maven.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -22,6 +28,7 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private final ReviewService reviewService;
     private final JwtUtil jwtUtil;
 
     @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 비밀번호는 최소 8자 이상이어야 하며, 영문 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.")
@@ -76,14 +83,18 @@ public class UserController {
     }
 
     @Operation(summary = "마이페이지", description = "로그인한 사용자의 정보를 조회합니다.")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/me")
-    public ResponseEntity<User> getUserDetails(HttpServletRequest request) {
+    public ResponseEntity<UserProfileResponse> getUserDetails(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
-            Optional<User> user = userService.findUserByLoginId(username);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(user.get());
+            Optional<User> userOptional = userService.findUserByLoginId(username);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                List<Review> reviews = reviewService.findReviewsByUserId(user.getUserId());
+                UserProfileResponse response = new UserProfileResponse(user, reviews);
+                return ResponseEntity.ok(response);
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -105,18 +116,17 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 수정", description = "로그인한 사용자의 정보를 수정합니다.")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/update")
     public ResponseEntity<User> updateUser(
             HttpServletRequest request,
-            @RequestParam String loginId,
-            @RequestParam String password,
-            @RequestParam String nickname) {
+            @RequestBody UpdateUserRequest updateUserRequest) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
-            if (existingUser.isPresent() && existingUser.get().getLoginId().equals(loginId)) {
-                User updatedUser = userService.updateUser(existingUser.get().getUserId(), loginId, password, nickname);
+            if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
+                User updatedUser = userService.updateUser(existingUser.get().getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
                 return ResponseEntity.ok(updatedUser);
             }
         }
@@ -124,6 +134,7 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 삭제", description = "로그인한 사용자의 계정을 삭제합니다.")
+    @SecurityRequirement(name = "Bearer Authentication")
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteUser(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
