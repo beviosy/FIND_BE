@@ -1,8 +1,6 @@
 package com.capstonedk.Maven.model;
 
 import jakarta.persistence.*;
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +16,4 @@ public class User {
     private String loginId;
     private String password;
     private String nickname;
-
-    @OneToMany(mappedBy = "user")
-    private List<Review> reviews;
 }

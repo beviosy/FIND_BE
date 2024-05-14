@@ -114,7 +114,7 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean isNicknameDuplicate(String nickname) {
-        return userRepository.findByNickname(nickname).isPresent();
+        return userRepository.existsByNickname(nickname);
     }
 
     public boolean isValidPassword(String password) {
@@ -129,6 +129,6 @@ public class UserService implements UserDetailsService {
         String accessToken = jwtUtil.generateAccessToken(user);
         String refreshToken = jwtUtil.generateRefreshToken(user);
 
-        return new LoginResponse(true, "Login successful", accessToken, refreshToken);
+        return new LoginResponse(true, "LOGIN_SUCCESS", new LoginResponse.Tokens(accessToken, refreshToken), "로그인 성공");
     }
 }

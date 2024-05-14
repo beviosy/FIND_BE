@@ -5,16 +5,9 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class LoginResponse {
+public class ApiResponse {
     private boolean success;
     private String code;
-    private Tokens result;
     private String message;
-
-    @Data
-    @AllArgsConstructor
-    public static class Tokens {
-        private String accessToken;
-        private String refreshToken;
-    }
+    private Object result;
 }

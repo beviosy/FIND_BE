@@ -14,30 +14,27 @@ public class JwtUtil {
 
     private final SecretKey secretKey;
 
-    // 액세스 토큰 만료 시간 설정
     @Value("${jwt.accessToken.expiration}")
     private long accessTokenExpiration;
 
-    // 리프레시 토큰 만료 시간 설정
     @Value("${jwt.refreshToken.expiration}")
     private long refreshTokenExpiration;
 
-    // 시크릿 키를 설정하여 SecretKey 객체 생성
     public JwtUtil(@Value("${jwt.secret}") String secret) {
+        if (secret.length() < 32) {
+            throw new IllegalArgumentException("The JWT secret key must be at least 32 characters long.");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // 액세스 토큰 생성
     public String generateAccessToken(User user) {
         return generateToken(user.getLoginId(), accessTokenExpiration);
     }
 
-    // 리프레시 토큰 생성
     public String generateRefreshToken(User user) {
         return generateToken(user.getLoginId(), refreshTokenExpiration);
     }
 
-    // 토큰 생성
     private String generateToken(String subject, long expirationTime) {
         return Jwts.builder()
                 .setSubject(subject)
@@ -47,7 +44,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    // 토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
@@ -57,7 +53,6 @@ public class JwtUtil {
         }
     }
 
-    // 토큰에서 사용자 이름 추출
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
         return claims.getSubject();

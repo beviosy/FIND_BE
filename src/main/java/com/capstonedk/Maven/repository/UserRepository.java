@@ -8,7 +8,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByLoginId(String loginId);
     Optional<User> findByLoginIdAndPassword(String loginId, String password);
 
-    boolean existsByLoginId(String loginId); // existsByLoginId 메서드 추가
-
     Optional<User> findByNickname(String nickname);
+    boolean existsByLoginId(String loginId);
+    boolean existsByNickname(String nickname);
 }
