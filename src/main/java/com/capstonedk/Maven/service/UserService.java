@@ -123,12 +123,17 @@ public class UserService implements UserDetailsService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByLoginIdAndPassword(request.getLoginId(), request.getPassword())
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid loginId or password"));
+        Optional<User> userOptional = userRepository.findByLoginIdAndPassword(request.getLoginId(), request.getPassword());
+        if (userOptional.isEmpty()) {
+            throw new UsernameNotFoundException("Invalid loginId or password");
+        }
 
+        User user = userOptional.get();
         String accessToken = jwtUtil.generateAccessToken(user);
         String refreshToken = jwtUtil.generateRefreshToken(user);
 
-        return new LoginResponse(true, "LOGIN_SUCCESS", new LoginResponse.Tokens(accessToken, refreshToken), "로그인 성공");
+        LoginResponse.Tokens tokens = new LoginResponse.Tokens(accessToken, refreshToken);
+        return new LoginResponse(true, "LOGIN_SUCCESS", tokens, "로그인에 성공했습니다.");
     }
 }
+

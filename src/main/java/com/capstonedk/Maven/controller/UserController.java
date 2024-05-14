@@ -31,7 +31,7 @@ public class UserController {
             @RequestParam String nickname) {
         try {
             User user = userService.createUser(loginId, password, nickname);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "User created successfully", user));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "사용자가 성공적으로 생성되었습니다", user));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "USER_CREATION_FAILED", e.getMessage(), null));
         }
@@ -41,21 +41,21 @@ public class UserController {
     @GetMapping("/check-id")
     public ResponseEntity<ApiResponse> checkLoginIdDuplicate(@RequestParam String loginId) {
         boolean isDuplicate = userService.isLoginIdDuplicate(loginId);
-        return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_ID", "Login ID check completed", null));
+        return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_ID", "로그인 ID 확인이 완료되었습니다", null));
     }
 
     @Operation(summary = "닉네임 중복 확인", description = "닉네임의 중복 여부를 확인합니다.")
     @GetMapping("/check-nickname")
     public ResponseEntity<ApiResponse> checkNicknameDuplicate(@RequestParam String nickname) {
         boolean isDuplicate = userService.isNicknameDuplicate(nickname);
-        return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_NICKNAME", "Nickname check completed", null));
+        return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_NICKNAME", "닉네임 확인이 완료되었습니다", null));
     }
 
     @Operation(summary = "비밀번호 규칙 검사", description = "비밀번호가 규칙에 맞는지 확인합니다. 비밀번호는 최소 8자 이상이어야 하며, 영문 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.")
     @GetMapping("/check-password")
     public ResponseEntity<ApiResponse> checkPasswordValidity(@RequestParam String password) {
         boolean isValid = userService.isValidPassword(password);
-        return ResponseEntity.ok(new ApiResponse(isValid, "CHECK_PASSWORD", "Password check completed", null));
+        return ResponseEntity.ok(new ApiResponse(isValid, "CHECK_PASSWORD", "비밀번호 확인이 완료되었습니다", null));
     }
 
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
@@ -67,7 +67,7 @@ public class UserController {
             LoginResponse response = userService.login(new LoginRequest(loginId, password));
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "LOGIN_FAILED", null, "Invalid login credentials"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "LOGIN_FAILED", null, "잘못된 로그인 정보입니다"));
         }
     }
 

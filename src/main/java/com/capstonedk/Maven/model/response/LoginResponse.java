@@ -2,8 +2,10 @@ package com.capstonedk.Maven.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
     private boolean success;
@@ -12,6 +14,7 @@ public class LoginResponse {
     private String message;
 
     @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class Tokens {
         private String accessToken;
