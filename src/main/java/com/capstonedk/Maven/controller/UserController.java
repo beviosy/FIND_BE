@@ -42,6 +42,20 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_ID", "Login ID check completed", null));
     }
 
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임의 중복 여부를 확인합니다.")
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ApiResponse> checkNicknameDuplicate(@RequestParam String nickname) {
+        boolean isDuplicate = userService.isNicknameDuplicate(nickname);
+        return ResponseEntity.ok(new ApiResponse(!isDuplicate, "CHECK_NICKNAME", "Nickname check completed", null));
+    }
+
+    @Operation(summary = "비밀번호 규칙 검사", description = "비밀번호가 규칙에 맞는지 확인합니다. 비밀번호는 최소 8자 이상이어야 하며, 영문 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.")
+    @GetMapping("/check-password")
+    public ResponseEntity<ApiResponse> checkPasswordValidity(@RequestParam String password) {
+        boolean isValid = userService.isValidPassword(password);
+        return ResponseEntity.ok(new ApiResponse(isValid, "CHECK_PASSWORD", "Password check completed", null));
+    }
+
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest) {
