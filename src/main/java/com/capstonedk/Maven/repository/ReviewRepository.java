@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByUserUserId(Long userId);
+    List<Review> findByStoreStoreId(Long storeId); // 추가
 }

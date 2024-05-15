@@ -4,6 +4,7 @@ import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.request.ReviewCreationRequest;
 import com.capstonedk.Maven.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 작성", description = "새로운 리뷰 작성")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/create")
     public ResponseEntity<Review> createReview(@RequestBody ReviewCreationRequest request) {
         try {
@@ -34,6 +36,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 조회", description = "특정 리뷰 조회")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/read/{reviewId}")
     public ResponseEntity<Review> readReview(@PathVariable Long reviewId) {
         try {
@@ -45,6 +48,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 수정", description = "기존 리뷰 수정")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/update/{reviewId}")
     public ResponseEntity<Review> updateReview(@PathVariable Long reviewId, @RequestBody ReviewCreationRequest request) {
         try {
@@ -56,6 +60,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 삭제", description = "특정 리뷰 삭제")
+    @SecurityRequirement(name = "Bearer Authentication")
     @DeleteMapping("/delete/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId) {
         try {

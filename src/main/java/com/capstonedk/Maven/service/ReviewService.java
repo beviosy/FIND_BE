@@ -64,4 +64,8 @@ public class ReviewService {
     public List<Review> findReviewsByUserId(Long userId) {
         return reviewRepository.findByUserUserId(userId);
     }
+
+    public List<Review> findReviewsByStoreId(Long storeId) { // 추가
+        return reviewRepository.findByStoreStoreId(storeId);
+    }
 }

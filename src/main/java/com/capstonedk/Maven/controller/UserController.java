@@ -100,8 +100,7 @@ public class UserController {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getUserId());
-                UserProfileResponse response = new UserProfileResponse(user, reviews);
-                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
+                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", reviews));
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
