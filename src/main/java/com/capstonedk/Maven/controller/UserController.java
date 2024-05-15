@@ -67,12 +67,7 @@ public class UserController {
 
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse> loginUser(HttpServletRequest request, @RequestBody LoginRequest loginRequest) {
-        String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ") || !jwtUtil.validateToken(token.substring(7))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "유효한 액세스 토큰이 필요합니다.", null));
-        }
-
+    public ResponseEntity<ApiResponse> loginUser(@RequestBody LoginRequest loginRequest) {
         try {
             LoginResponse response = userService.login(loginRequest);
             if (response.getResult() == null) {
@@ -100,7 +95,8 @@ public class UserController {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getUserId());
-                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", reviews));
+                UserProfileResponse response = new UserProfileResponse(user, reviews);
+                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
