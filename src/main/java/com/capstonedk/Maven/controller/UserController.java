@@ -36,7 +36,9 @@ public class UserController {
     public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequest request) {
         try {
             User user = userService.createUser(request.getLoginId(), request.getPassword(), request.getNickname());
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "사용자가 성공적으로 생성되었습니다", user));
+            String accessToken = jwtUtil.generateAccessToken(user);
+            String refreshToken = jwtUtil.generateRefreshToken(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "사용자가 성공적으로 생성되었습니다", new LoginResponse.Tokens(accessToken, refreshToken)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "USER_CREATION_FAILED", e.getMessage(), null));
         }
@@ -65,27 +67,32 @@ public class UserController {
 
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse> loginUser(HttpServletRequest request, @RequestBody LoginRequest loginRequest) {
+        String token = request.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ") || !jwtUtil.validateToken(token.substring(7))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "유효한 액세스 토큰이 필요합니다.", null));
+        }
+
         try {
-            LoginResponse response = userService.login(request);
+            LoginResponse response = userService.login(loginRequest);
             if (response.getResult() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "LOGIN_FAILED", null, "잘못된 로그인 정보입니다"));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "잘못된 로그인 정보입니다", null));
             }
 
             return ResponseEntity.ok()
                     .header("Authorization", "Bearer " + response.getResult().getAccessToken())
                     .header("Refresh-Token", response.getResult().getRefreshToken())
-                    .body(response);
+                    .body(new ApiResponse(true, "LOGIN_SUCCESS", "로그인 성공", response.getResult()));
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "LOGIN_FAILED", null, "잘못된 로그인 정보입니다"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "잘못된 로그인 정보입니다", null));
         }
     }
 
     @Operation(summary = "마이페이지", description = "로그인한 사용자의 정보를 조회합니다.")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> getUserDetails(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse> getUserDetails(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
@@ -94,31 +101,31 @@ public class UserController {
                 User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getUserId());
                 UserProfileResponse response = new UserProfileResponse(user, reviews);
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
     }
 
     @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse.Tokens> refreshAccessToken(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse> refreshAccessToken(HttpServletRequest request) {
         String refreshToken = request.getHeader("Refresh-Token");
         if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
             String username = jwtUtil.getUsernameFromToken(refreshToken);
             Optional<User> user = userService.findUserByLoginId(username);
             if (user.isPresent()) {
                 String newAccessToken = jwtUtil.generateAccessToken(user.get());
-                return ResponseEntity.ok(new LoginResponse.Tokens(newAccessToken, refreshToken));
+                return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
     }
 
     @Operation(summary = "사용자 수정", description = "로그인한 사용자의 정보를 수정합니다.")
     @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/update")
-    public ResponseEntity<User> updateUser(
+    public ResponseEntity<ApiResponse> updateUser(
             HttpServletRequest request,
             @RequestBody UpdateUserRequest updateUserRequest) {
         String token = request.getHeader("Authorization");
@@ -127,25 +134,25 @@ public class UserController {
             Optional<User> existingUser = userService.findUserByLoginId(username);
             if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
                 User updatedUser = userService.updateUser(existingUser.get().getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
-                return ResponseEntity.ok(updatedUser);
+                return ResponseEntity.ok(new ApiResponse(true, "USER_UPDATED", "사용자 정보가 성공적으로 수정되었습니다", updatedUser));
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
     }
 
     @Operation(summary = "사용자 삭제", description = "로그인한 사용자의 계정을 삭제합니다.")
     @SecurityRequirement(name = "Bearer Authentication")
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteUser(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse> deleteUser(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
             if (existingUser.isPresent()) {
                 userService.deleteUser(existingUser.get().getUserId());
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(new ApiResponse(true, "USER_DELETED", "사용자 계정이 성공적으로 삭제되었습니다", null));
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
     }
 }
