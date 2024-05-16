@@ -1,6 +1,6 @@
 package com.capstonedk.Maven.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.Instant;
 import lombok.Getter;
@@ -18,12 +18,12 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId") // User 엔티티의 프라이머리 키와 연결되는 외래 키
-    @JsonManagedReference
+    @JsonBackReference
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "storeId") // Store 엔티티의 프라이머리 키와 연결되는 외래 키
-    @JsonManagedReference
+    @JsonBackReference
     private Store store;
 
     private int rating;

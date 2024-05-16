@@ -110,16 +110,27 @@ public class UserController {
     @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse> refreshAccessToken(HttpServletRequest request) {
-        String refreshToken = request.getHeader("Refresh-Token");
-        if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
-            String username = jwtUtil.getUsernameFromToken(refreshToken);
-            Optional<User> user = userService.findUserByLoginId(username);
-            if (user.isPresent()) {
-                String newAccessToken = jwtUtil.generateAccessToken(user.get());
-                return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
-            }
+        String refreshToken = request.getHeader("Authorization");
+
+        if (refreshToken == null || !refreshToken.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "리프레시 토큰이 제공되지 않았거나 올바르지 않습니다.", null));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
+
+        refreshToken = refreshToken.substring(7); // "Bearer " 스킴 제거
+
+        if (!jwtUtil.validateToken(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "유효하지 않은 리프레시 토큰입니다.", null));
+        }
+
+        try {
+            String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
+            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
+        }
     }
 
     @Operation(summary = "사용자 수정", description = "로그인한 사용자의 정보를 수정합니다.")
