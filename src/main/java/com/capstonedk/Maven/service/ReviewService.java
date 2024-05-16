@@ -1,45 +1,67 @@
 package com.capstonedk.Maven.service;
 
 import com.capstonedk.Maven.model.Review;
+import com.capstonedk.Maven.model.Store;
+import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.model.request.ReviewCreationRequest;
 import com.capstonedk.Maven.repository.ReviewRepository;
+import com.capstonedk.Maven.repository.StoreRepository;
+import com.capstonedk.Maven.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
+    private final StoreRepository storeRepository;
 
     public Review createReview(ReviewCreationRequest request) {
-        Review review = new Review();
-        BeanUtils.copyProperties(request, review);
-        Review savedReview = reviewRepository.save(review);
-        return savedReview;
-    }
+        Optional<User> userOptional = userRepository.findById(request.getUserId());
+        Optional<Store> storeOptional = storeRepository.findById(request.getStoreId());
 
-    public Review findReview(Long reviewId) {
-        return reviewRepository.findById(reviewId).orElse(null);
-    }
+        if (userOptional.isPresent() && storeOptional.isPresent()) {
+            Review review = new Review();
+            review.setUser(userOptional.get());
+            review.setStore(storeOptional.get());
+            review.setRating(request.getRating());
+            review.setContent(request.getContent());
+            review.setCreatedDate(Instant.now());
+            review.setModifiedDate(Instant.now());
 
-    public Review updateReview(Long reviewId, ReviewCreationRequest request) {
-        Review reviewToUpdate = reviewRepository.findById(reviewId).orElse(null);
-        if (reviewToUpdate != null) {
-            // 업데이트 로직을 수행하고 저장
-            // 예를 들어, request에서 필요한 정보를 가져와서 업데이트
-            // 여기서는 간단히 BeanUtils.copyProperties를 사용하여 업데이트
-            BeanUtils.copyProperties(request, reviewToUpdate);
-            return reviewRepository.save(reviewToUpdate);
+            return reviewRepository.save(review);
         } else {
-            return null;
+            throw new IllegalArgumentException("Invalid userId or storeId");
         }
     }
 
-    public void deleteReview(Long reviewId) {
-        reviewRepository.deleteById(reviewId);
+    public Review findReview(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
     }
 
-    // 나머지 코드는 동일하게 유지됩니다.
+    public Review updateReview(Long reviewId, ReviewCreationRequest request) {
+        Review review = findReview(reviewId);
+
+        review.setRating(request.getRating());
+        review.setContent(request.getContent());
+        review.setModifiedDate(Instant.now());
+
+        return reviewRepository.save(review);
+    }
+
+    public void deleteReview(Long reviewId) {
+        Review review = findReview(reviewId);
+        reviewRepository.delete(review);
+    }
+
+    public List<Review> findReviewsByUserId(Long userId) {
+        return reviewRepository.findByUserUserId(userId);
+    }
 }
