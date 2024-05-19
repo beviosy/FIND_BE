@@ -61,7 +61,6 @@ public class JwtUtil {
                 .signWith(secretKey)
                 .compact();
 
-        blacklistToken(refreshToken); // 블랙리스트에 추가
         return newAccessToken;
     }
 
