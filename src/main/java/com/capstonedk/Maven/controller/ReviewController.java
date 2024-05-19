@@ -39,7 +39,7 @@ public class ReviewController {
         blacklistToken(token);
         try {
             Review createdReview = reviewService.createReview(reviewRequest, userId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", createdReview));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", createdReview, createdReview.getReviewId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 작성 중 오류가 발생했습니다.", null));
         }
@@ -66,7 +66,7 @@ public class ReviewController {
         blacklistToken(token);
         try {
             Review updatedReview = reviewService.updateReview(reviewId, reviewRequest);
-            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", updatedReview));
+            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", updatedReview, updatedReview.getReviewId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 수정 중 오류가 발생했습니다.", null));
         }
