@@ -64,4 +64,9 @@ public class ReviewService {
     public List<Review> findReviewsByUserId(Long userId) {
         return reviewRepository.findByUserUserId(userId);
     }
+
+    // 가게 리뷰 조회 메서드 추가
+    public List<Review> findReviewsByStoreId(Long storeId) {
+        return reviewRepository.findByStoreStoreId(storeId);
+    }
 }

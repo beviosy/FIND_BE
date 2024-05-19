@@ -36,9 +36,7 @@ public class UserController {
     public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequest request) {
         try {
             User user = userService.createUser(request.getLoginId(), request.getPassword(), request.getNickname());
-            String accessToken = jwtUtil.generateAccessToken(user);
-            String refreshToken = jwtUtil.generateRefreshToken(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "사용자가 성공적으로 생성되었습니다", new LoginResponse.Tokens(accessToken, refreshToken)));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "USER_CREATED", "사용자가 성공적으로 생성되었습니다", null));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "USER_CREATION_FAILED", e.getMessage(), null));
         }
@@ -68,17 +66,8 @@ public class UserController {
     @Operation(summary = "로그인", description = "사용자가 로그인합니다.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> loginUser(HttpServletRequest request, @RequestBody LoginRequest loginRequest) {
-        String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ") || !jwtUtil.validateToken(token.substring(7))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "유효한 액세스 토큰이 필요합니다.", null));
-        }
-
         try {
             LoginResponse response = userService.login(loginRequest);
-            if (response.getResult() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "LOGIN_FAILED", "잘못된 로그인 정보입니다", null));
-            }
-
             return ResponseEntity.ok()
                     .header("Authorization", "Bearer " + response.getResult().getAccessToken())
                     .header("Refresh-Token", response.getResult().getRefreshToken())
@@ -119,7 +108,7 @@ public class UserController {
 
         refreshToken = refreshToken.substring(7); // "Bearer " 스킴 제거
 
-        if (!jwtUtil.validateToken(refreshToken)) {
+        if (!jwtUtil.validateToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "유효하지 않은 리프레시 토큰입니다.", null));
         }
