@@ -87,4 +87,15 @@ public class JwtUtil {
         long expirationTime = expirationDate.getTime() - claims.getIssuedAt().getTime();
         return expirationTime == refreshTokenExpiration;
     }
+
+    public boolean isAccessToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        Date expirationDate = claims.getExpiration();
+        long expirationTime = expirationDate.getTime() - claims.getIssuedAt().getTime();
+        return expirationTime == accessTokenExpiration;
+    }
 }

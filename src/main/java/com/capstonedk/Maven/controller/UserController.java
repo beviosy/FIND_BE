@@ -115,7 +115,7 @@ public class UserController {
 
         try {
             String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
-            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
+            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, null)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
@@ -129,7 +129,7 @@ public class UserController {
             HttpServletRequest request,
             @RequestBody UpdateUserRequest updateUserRequest) {
         String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
+        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7)) && jwtUtil.isAccessToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
             if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
@@ -145,7 +145,7 @@ public class UserController {
     @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse> deleteUser(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
+        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7)) && jwtUtil.isAccessToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> existingUser = userService.findUserByLoginId(username);
             if (existingUser.isPresent()) {
