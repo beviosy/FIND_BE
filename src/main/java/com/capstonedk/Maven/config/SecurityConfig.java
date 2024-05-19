@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/login", "/api/users/register", "/api/users/check-id", "/api/users/check-nickname", "/api/users/check-password").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/store/**").permitAll() // StoreController 경로 허용
+                        .requestMatchers("/api/review/read/**").permitAll() // Review read 경로 허용
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class);

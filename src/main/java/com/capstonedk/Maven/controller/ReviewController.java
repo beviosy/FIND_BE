@@ -32,6 +32,9 @@ public class ReviewController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createReview(HttpServletRequest request, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
+        }
         if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
@@ -59,6 +62,9 @@ public class ReviewController {
     @PutMapping("/update/{reviewId}")
     public ResponseEntity<ApiResponse> updateReview(HttpServletRequest request, @PathVariable Long reviewId, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
+        }
         if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
@@ -82,10 +88,21 @@ public class ReviewController {
     @DeleteMapping("/delete/{reviewId}")
     public ResponseEntity<ApiResponse> deleteReview(HttpServletRequest request, @PathVariable Long reviewId) {
         String token = getToken(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
+        }
         if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
+        String userId = jwtUtil.getUsernameFromToken(token);
+
         try {
+            // 리뷰 작성자와 현재 사용자가 일치하는지 확인
+            Review existingReview = reviewService.findReview(reviewId);
+            if (!existingReview.getUser().getLoginId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "리뷰를 삭제할 권한이 없습니다.", null));
+            }
+
             reviewService.deleteReview(reviewId);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_DELETED", "리뷰가 성공적으로 삭제되었습니다.", null));
         } catch (Exception e) {
