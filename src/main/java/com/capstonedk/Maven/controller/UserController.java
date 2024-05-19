@@ -83,7 +83,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> getUserDetails(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7))) {
+        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7)) && jwtUtil.isAccessToken(token.substring(7))) {
             String username = jwtUtil.getUsernameFromToken(token.substring(7));
             Optional<User> userOptional = userService.findUserByLoginId(username);
             if (userOptional.isPresent()) {
@@ -115,7 +115,7 @@ public class UserController {
 
         try {
             String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
-            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, null)));
+            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
