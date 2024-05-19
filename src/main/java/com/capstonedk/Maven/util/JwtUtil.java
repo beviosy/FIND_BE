@@ -54,14 +54,12 @@ public class JwtUtil {
                 .parseClaimsJws(refreshToken)
                 .getBody();
 
-        String newAccessToken = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(claims.getSubject())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(secretKey)
                 .compact();
-
-        return newAccessToken;
     }
 
     public void blacklistToken(String token) {

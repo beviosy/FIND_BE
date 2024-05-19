@@ -115,11 +115,15 @@ public class UserController {
 
         try {
             String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
+            String newRefreshToken = jwtUtil.generateRefreshToken(jwtUtil.getUsernameFromToken(refreshToken));
+            jwtUtil.blacklistToken(refreshToken); // 이전 리프레시 토큰 블랙리스트에 추가
+
             String oldAccessToken = request.getHeader("Old-Authorization");
             if (oldAccessToken != null && oldAccessToken.startsWith("Bearer ")) {
                 jwtUtil.blacklistToken(oldAccessToken.substring(7));
             }
-            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
+
+            return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, newRefreshToken)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "토큰 재발급에 실패했습니다", null));
