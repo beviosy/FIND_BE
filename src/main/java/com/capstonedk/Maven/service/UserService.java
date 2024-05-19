@@ -2,6 +2,7 @@ package com.capstonedk.Maven.service;
 
 import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.repository.UserRepository;
+import com.capstonedk.Maven.repository.ReviewRepository;
 import com.capstonedk.Maven.model.request.LoginRequest;
 import com.capstonedk.Maven.model.response.LoginResponse;
 import com.capstonedk.Maven.util.JwtUtil;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -81,6 +83,9 @@ public class UserService implements UserDetailsService {
 
     public void deleteUser(Long userId) {
         try {
+            // 연관된 리뷰 삭제
+            reviewRepository.deleteByUserUserId(userId);
+            // 사용자 삭제
             userRepository.deleteById(userId);
         } catch (EmptyResultDataAccessException ex) {
             throw new EmptyResultDataAccessException("해당 ID를 가진 사용자를 찾을 수 없습니다: " + userId, 1);

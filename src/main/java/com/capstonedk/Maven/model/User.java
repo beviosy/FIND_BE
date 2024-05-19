@@ -3,6 +3,7 @@ package com.capstonedk.Maven.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,4 +17,7 @@ public class User {
     private String loginId;
     private String password;
     private String nickname;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Review> reviews;
 }
