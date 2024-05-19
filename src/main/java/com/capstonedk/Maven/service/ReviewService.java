@@ -22,8 +22,8 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
 
-    public Review createReview(ReviewCreationRequest request) {
-        Optional<User> userOptional = userRepository.findById(request.getUserId());
+    public Review createReview(ReviewCreationRequest request, String userId) {
+        Optional<User> userOptional = userRepository.findByLoginId(userId);
         Optional<Store> storeOptional = storeRepository.findById(request.getStoreId());
 
         if (userOptional.isPresent() && storeOptional.isPresent()) {
@@ -48,7 +48,6 @@ public class ReviewService {
 
     public Review updateReview(Long reviewId, ReviewCreationRequest request) {
         Review review = findReview(reviewId);
-
         review.setRating(request.getRating());
         review.setContent(request.getContent());
         review.setModifiedDate(Instant.now());
@@ -65,7 +64,6 @@ public class ReviewService {
         return reviewRepository.findByUserUserId(userId);
     }
 
-    // 가게 리뷰 조회 메서드 추가
     public List<Review> findReviewsByStoreId(Long storeId) {
         return reviewRepository.findByStoreStoreId(storeId);
     }

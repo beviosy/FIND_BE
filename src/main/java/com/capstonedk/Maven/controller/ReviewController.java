@@ -31,11 +31,14 @@ public class ReviewController {
     @Operation(summary = "리뷰 작성", description = "새로운 리뷰 작성")
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createReview(HttpServletRequest request, @RequestBody ReviewCreationRequest reviewRequest) {
-        if (!isValidToken(request)) {
+        String token = getToken(request);
+        if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
+        String userId = jwtUtil.getUsernameFromToken(token);
+        blacklistToken(token);
         try {
-            Review createdReview = reviewService.createReview(reviewRequest);
+            Review createdReview = reviewService.createReview(reviewRequest, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", createdReview));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 작성 중 오류가 발생했습니다.", null));
@@ -56,9 +59,11 @@ public class ReviewController {
     @Operation(summary = "리뷰 수정", description = "기존 리뷰 수정")
     @PutMapping("/update/{reviewId}")
     public ResponseEntity<ApiResponse> updateReview(HttpServletRequest request, @PathVariable Long reviewId, @RequestBody ReviewCreationRequest reviewRequest) {
-        if (!isValidToken(request)) {
+        String token = getToken(request);
+        if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
+        blacklistToken(token);
         try {
             Review updatedReview = reviewService.updateReview(reviewId, reviewRequest);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", updatedReview));
@@ -70,9 +75,11 @@ public class ReviewController {
     @Operation(summary = "리뷰 삭제", description = "특정 리뷰 삭제")
     @DeleteMapping("/delete/{reviewId}")
     public ResponseEntity<ApiResponse> deleteReview(HttpServletRequest request, @PathVariable Long reviewId) {
-        if (!isValidToken(request)) {
+        String token = getToken(request);
+        if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
+        blacklistToken(token);
         try {
             reviewService.deleteReview(reviewId);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_DELETED", "리뷰가 성공적으로 삭제되었습니다.", null));
@@ -81,8 +88,19 @@ public class ReviewController {
         }
     }
 
-    private boolean isValidToken(HttpServletRequest request) {
+    private boolean isValidToken(String token) {
+        return token != null && jwtUtil.validateToken(token);
+    }
+
+    private void blacklistToken(String token) {
+        jwtUtil.blacklistToken(token);
+    }
+
+    private String getToken(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
-        return token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7));
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return null;
     }
 }

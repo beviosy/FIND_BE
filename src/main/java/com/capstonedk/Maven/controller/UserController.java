@@ -79,7 +79,7 @@ public class UserController {
     }
 
     @Operation(summary = "마이페이지", description = "로그인한 사용자의 정보를 조회합니다.")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> getUserDetails(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
@@ -115,6 +115,10 @@ public class UserController {
 
         try {
             String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
+            String oldAccessToken = request.getHeader("Old-Authorization");
+            if (oldAccessToken != null && oldAccessToken.startsWith("Bearer ")) {
+                jwtUtil.blacklistToken(oldAccessToken.substring(7));
+            }
             return ResponseEntity.ok(new ApiResponse(true, "TOKEN_REFRESHED", "토큰이 재발급되었습니다", new LoginResponse.Tokens(newAccessToken, refreshToken)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -123,7 +127,7 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 수정", description = "로그인한 사용자의 정보를 수정합니다.")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/update")
     public ResponseEntity<ApiResponse> updateUser(
             HttpServletRequest request,
@@ -141,7 +145,7 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 삭제", description = "로그인한 사용자의 계정을 삭제합니다.")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse> deleteUser(HttpServletRequest request) {
         String token = request.getHeader("Authorization");

@@ -1,6 +1,7 @@
 package com.capstonedk.Maven.util;
 
 import com.capstonedk.Maven.model.User;
+import com.capstonedk.Maven.service.TokenBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,9 +22,11 @@ public class JwtUtil {
     private long refreshTokenExpiration;
 
     private final SecretKey secretKey;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtUtil() {
+    public JwtUtil(TokenBlacklistService tokenBlacklistService) {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     public String generateAccessToken(User user) {
@@ -51,12 +54,19 @@ public class JwtUtil {
                 .parseClaimsJws(refreshToken)
                 .getBody();
 
-        return Jwts.builder()
+        String newAccessToken = Jwts.builder()
                 .setSubject(claims.getSubject())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(secretKey)
                 .compact();
+
+        blacklistToken(refreshToken); // 블랙리스트에 추가
+        return newAccessToken;
+    }
+
+    public void blacklistToken(String token) {
+        tokenBlacklistService.blacklistToken(token);
     }
 
     public String getUsernameFromToken(String token) {
@@ -70,6 +80,9 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
+            if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                return false;
+            }
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
