@@ -88,7 +88,7 @@ public class UserController {
             Optional<User> userOptional = userService.findUserByLoginId(username);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-                List<Review> reviews = reviewService.findReviewsByUserId(user.getUserId());
+                List<Review> reviews = reviewService.findReviewsByUserId(user.getLoginId());
                 UserProfileResponse response = new UserProfileResponse(user, reviews);
                 return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
             }

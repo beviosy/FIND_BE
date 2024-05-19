@@ -36,7 +36,6 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
         String userId = jwtUtil.getUsernameFromToken(token);
-        blacklistToken(token);
         try {
             Review createdReview = reviewService.createReview(reviewRequest, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", createdReview, createdReview.getReviewId()));
@@ -63,8 +62,15 @@ public class ReviewController {
         if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
-        blacklistToken(token);
+        String userId = jwtUtil.getUsernameFromToken(token);
+
         try {
+            // 리뷰 작성자와 현재 사용자가 일치하는지 확인
+            Review existingReview = reviewService.findReview(reviewId);
+            if (!existingReview.getUser().getLoginId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "리뷰를 수정할 권한이 없습니다.", null));
+            }
+
             Review updatedReview = reviewService.updateReview(reviewId, reviewRequest);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", updatedReview, updatedReview.getReviewId()));
         } catch (Exception e) {
@@ -79,7 +85,6 @@ public class ReviewController {
         if (!isValidToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
         }
-        blacklistToken(token);
         try {
             reviewService.deleteReview(reviewId);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_DELETED", "리뷰가 성공적으로 삭제되었습니다.", null));
@@ -90,10 +95,6 @@ public class ReviewController {
 
     private boolean isValidToken(String token) {
         return token != null && jwtUtil.validateToken(token);
-    }
-
-    private void blacklistToken(String token) {
-        jwtUtil.blacklistToken(token);
     }
 
     private String getToken(HttpServletRequest request) {

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,22 +22,20 @@ public class ReviewService {
     private final StoreRepository storeRepository;
 
     public Review createReview(ReviewCreationRequest request, String userId) {
-        Optional<User> userOptional = userRepository.findByLoginId(userId);
-        Optional<Store> storeOptional = storeRepository.findById(request.getStoreId());
+        User user = userRepository.findByLoginId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid userId"));
+        Store store = storeRepository.findById(request.getStoreId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid storeId"));
 
-        if (userOptional.isPresent() && storeOptional.isPresent()) {
-            Review review = new Review();
-            review.setUser(userOptional.get());
-            review.setStore(storeOptional.get());
-            review.setRating(request.getRating());
-            review.setContent(request.getContent());
-            review.setCreatedDate(Instant.now());
-            review.setModifiedDate(Instant.now());
+        Review review = new Review();
+        review.setUser(user);
+        review.setStore(store);
+        review.setRating(request.getRating());
+        review.setContent(request.getContent());
+        review.setCreatedDate(Instant.now());
+        review.setModifiedDate(Instant.now());
 
-            return reviewRepository.save(review);
-        } else {
-            throw new IllegalArgumentException("Invalid userId or storeId");
-        }
+        return reviewRepository.save(review);
     }
 
     public Review findReview(Long reviewId) {
@@ -48,8 +45,12 @@ public class ReviewService {
 
     public Review updateReview(Long reviewId, ReviewCreationRequest request) {
         Review review = findReview(reviewId);
+        Store store = storeRepository.findById(request.getStoreId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid storeId"));
+
         review.setRating(request.getRating());
         review.setContent(request.getContent());
+        review.setStore(store);
         review.setModifiedDate(Instant.now());
 
         return reviewRepository.save(review);
@@ -60,8 +61,10 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
-    public List<Review> findReviewsByUserId(Long userId) {
-        return reviewRepository.findByUserUserId(userId);
+    public List<Review> findReviewsByUserId(String userId) {
+        User user = userRepository.findByLoginId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid userId"));
+        return reviewRepository.findByUserUserId(user.getUserId());
     }
 
     public List<Review> findReviewsByStoreId(Long storeId) {
