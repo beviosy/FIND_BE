@@ -50,7 +50,7 @@ public class ReviewController {
     public ResponseEntity<ApiResponse> readReview(@PathVariable Long reviewId) {
         try {
             Review review = reviewService.findReview(reviewId);
-            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_FOUND", "리뷰가 성공적으로 조회되었습니다.", review));
+            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_FOUND", "리뷰가 성공적으로 조회되었습니다.", review, review.getReviewId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "REVIEW_NOT_FOUND", "리뷰를 찾을 수 없습니다.", null));
         }
