@@ -1,15 +1,24 @@
 package com.capstonedk.Maven.model.response;
 
-import com.capstonedk.Maven.model.Review;
+import com.capstonedk.Maven.dto.ReviewDTO;
 import com.capstonedk.Maven.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 public class UserProfileResponse {
-    private User user;
-    private List<Review> reviews;
+    private Long userId;
+    private String loginId;
+    private String nickname;
+    private List<ReviewDTO> reviews;
+
+    public UserProfileResponse(User user, List<ReviewDTO> reviews) {
+        this.userId = user.getUserId();
+        this.loginId = user.getLoginId();
+        this.nickname = user.getNickname();
+        this.reviews = reviews;
+    }
 }

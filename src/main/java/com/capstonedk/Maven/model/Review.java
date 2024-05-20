@@ -1,10 +1,10 @@
 package com.capstonedk.Maven.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -13,17 +13,15 @@ import lombok.Setter;
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "review_id") // review_id와 매핑되는 데이터베이스 열을 지정합니다.
+    @Column(name = "review_id")
     private Long reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId") // User 엔티티의 프라이머리 키와 연결되는 외래 키
-    @JsonBackReference
+    @JoinColumn(name = "userId")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "storeId") // Store 엔티티의 프라이머리 키와 연결되는 외래 키
-    @JsonBackReference
+    @JoinColumn(name = "storeId")
     private Store store;
 
     private int rating;

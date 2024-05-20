@@ -1,5 +1,6 @@
 package com.capstonedk.Maven.controller;
 
+import com.capstonedk.Maven.dto.ReviewDTO;
 import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.User;
 import com.capstonedk.Maven.model.request.LoginRequest;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -89,7 +91,8 @@ public class UserController {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getLoginId());
-                UserProfileResponse response = new UserProfileResponse(user, reviews);
+                List<ReviewDTO> reviewDTOs = reviews.stream().map(ReviewDTO::new).collect(Collectors.toList());
+                UserProfileResponse response = new UserProfileResponse(user, reviewDTOs);
                 return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
             }
         }

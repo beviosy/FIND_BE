@@ -1,5 +1,6 @@
 package com.capstonedk.Maven.controller;
 
+import com.capstonedk.Maven.dto.ReviewDTO;
 import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.Store;
 import com.capstonedk.Maven.model.request.StoreCreationRequest;
@@ -119,7 +120,8 @@ public class StoreController {
     public ResponseEntity<ApiResponse> getStoreReviews(@PathVariable Long storeId) {
         try {
             List<Review> reviews = reviewService.findReviewsByStoreId(storeId);
-            return ResponseEntity.ok(new ApiResponse(true, "REVIEWS_FOUND", "리뷰 조회 성공", reviews));
+            List<ReviewDTO> reviewDTOs = reviews.stream().map(ReviewDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponse(true, "REVIEWS_FOUND", "리뷰 조회 성공", reviewDTOs));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 조회 중 오류가 발생했습니다.", null));
         }

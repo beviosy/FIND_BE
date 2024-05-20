@@ -1,5 +1,6 @@
 package com.capstonedk.Maven.controller;
 
+import com.capstonedk.Maven.dto.ReviewDTO;
 import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.request.ReviewCreationRequest;
 import com.capstonedk.Maven.model.response.ApiResponse;
@@ -32,18 +33,19 @@ public class ReviewController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createReview(HttpServletRequest request, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
-        }
-        if (!isValidToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
+        if (token == null || !isValidToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }
         String userId = jwtUtil.getUsernameFromToken(token);
         try {
             Review createdReview = reviewService.createReview(reviewRequest, userId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", createdReview, createdReview.getReviewId()));
+            ReviewDTO reviewDTO = new ReviewDTO(createdReview);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse(true, "REVIEW_CREATED", "리뷰가 성공적으로 작성되었습니다.", reviewDTO, createdReview.getReviewId()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 작성 중 오류가 발생했습니다.", null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 작성 중 오류가 발생했습니다.", null));
         }
     }
 
@@ -52,9 +54,11 @@ public class ReviewController {
     public ResponseEntity<ApiResponse> readReview(@PathVariable Long reviewId) {
         try {
             Review review = reviewService.findReview(reviewId);
-            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_FOUND", "리뷰가 성공적으로 조회되었습니다.", review, review.getReviewId()));
+            ReviewDTO reviewDTO = new ReviewDTO(review);
+            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_FOUND", "리뷰가 성공적으로 조회되었습니다.", reviewDTO, review.getReviewId()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "REVIEW_NOT_FOUND", "리뷰를 찾을 수 없습니다.", null));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(false, "REVIEW_NOT_FOUND", "리뷰를 찾을 수 없습니다.", null));
         }
     }
 
@@ -62,25 +66,25 @@ public class ReviewController {
     @PutMapping("/update/{reviewId}")
     public ResponseEntity<ApiResponse> updateReview(HttpServletRequest request, @PathVariable Long reviewId, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
-        }
-        if (!isValidToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
+        if (token == null || !isValidToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }
         String userId = jwtUtil.getUsernameFromToken(token);
 
         try {
-            // 리뷰 작성자와 현재 사용자가 일치하는지 확인
             Review existingReview = reviewService.findReview(reviewId);
             if (!existingReview.getUser().getLoginId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "리뷰를 수정할 권한이 없습니다.", null));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, "FORBIDDEN", "리뷰를 수정할 권한이 없습니다.", null));
             }
 
             Review updatedReview = reviewService.updateReview(reviewId, reviewRequest);
-            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", updatedReview, updatedReview.getReviewId()));
+            ReviewDTO reviewDTO = new ReviewDTO(updatedReview);
+            return ResponseEntity.ok(new ApiResponse(true, "REVIEW_UPDATED", "리뷰가 성공적으로 수정되었습니다.", reviewDTO, updatedReview.getReviewId()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 수정 중 오류가 발생했습니다.", null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 수정 중 오류가 발생했습니다.", null));
         }
     }
 
@@ -88,25 +92,24 @@ public class ReviewController {
     @DeleteMapping("/delete/{reviewId}")
     public ResponseEntity<ApiResponse> deleteReview(HttpServletRequest request, @PathVariable Long reviewId) {
         String token = getToken(request);
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
-        }
-        if (!isValidToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "엑세스 토큰이 필요합니다.", null));
+        if (token == null || !isValidToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }
         String userId = jwtUtil.getUsernameFromToken(token);
 
         try {
-            // 리뷰 작성자와 현재 사용자가 일치하는지 확인
             Review existingReview = reviewService.findReview(reviewId);
             if (!existingReview.getUser().getLoginId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "리뷰를 삭제할 권한이 없습니다.", null));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, "FORBIDDEN", "리뷰를 삭제할 권한이 없습니다.", null));
             }
 
             reviewService.deleteReview(reviewId);
             return ResponseEntity.ok(new ApiResponse(true, "REVIEW_DELETED", "리뷰가 성공적으로 삭제되었습니다.", null));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 삭제 중 오류가 발생했습니다.", null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "INTERNAL_SERVER_ERROR", "리뷰 삭제 중 오류가 발생했습니다.", null));
         }
     }
 
