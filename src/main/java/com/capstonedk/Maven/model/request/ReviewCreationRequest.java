@@ -6,7 +6,6 @@ import java.time.Instant;
 
 @Data
 public class ReviewCreationRequest {
-    private Long userId;
     private Long storeId;
     private int rating;
     private String content;
