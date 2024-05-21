@@ -1,11 +1,10 @@
 package com.capstonedk.Maven.model;
 
 import jakarta.persistence.*;
-import java.util.List;
-import java.util.Locale;
-
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
+import com.capstonedk.Maven.dto.ReviewDTO;  // 추가된 import 문
 
 @Getter
 @Setter
@@ -31,21 +30,21 @@ public class Store {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String info;
 
-    @OneToMany(mappedBy = "store")
-    private List<Review> reviews;
+    @Transient
+    private List<ReviewDTO> reviewDTOs; // 유지된 필드
 
     // 리뷰에서 평점의 평균을 계산하여 맛집의 ratingAverage에 업데이트
     public void updateRatingAverage() {
-        if (reviews == null || reviews.isEmpty()) {
+        if (reviewDTOs == null || reviewDTOs.isEmpty()) {
             ratingAverage = 0; // 리뷰가 없으면 평균은 0
             return;
         }
 
-        int sum = 0;
-        for (Review review : reviews) {
-            sum += review.getRating();
+        float sum = 0;
+        for (ReviewDTO reviewDTO : reviewDTOs) {
+            sum += reviewDTO.getRating();
         }
 
-        ratingAverage = (float) sum / reviews.size();
+        ratingAverage = sum / reviewDTOs.size();
     }
 }

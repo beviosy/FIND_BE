@@ -1,6 +1,6 @@
 package com.capstonedk.Maven.controller;
 
-import com.capstonedk.Maven.dto.ReviewDTO;
+import com.capstonedk.Maven.dto.ReviewDTO;  // 추가된 import 문
 import com.capstonedk.Maven.model.Review;
 import com.capstonedk.Maven.model.Store;
 import com.capstonedk.Maven.model.request.StoreCreationRequest;
@@ -59,6 +59,12 @@ public class StoreController {
     public ResponseEntity<ApiResponse> findStore(@PathVariable Long storeId) {
         try {
             Store store = storeService.findStore(storeId);
+            List<Review> reviews = reviewService.findReviewsByStoreId(storeId);
+            List<ReviewDTO> reviewDTOs = reviews.stream()
+                    .map(ReviewDTO::new)
+                    .collect(Collectors.toList());
+            store.setReviewDTOs(reviewDTOs);  // 리뷰를 설정
+            store.updateRatingAverage(); // 평점 평균을 업데이트
             return ResponseEntity.ok(new ApiResponse(true, "STORE_FOUND", "가게 정보 조회 성공", store));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "STORE_NOT_FOUND", "가게를 찾을 수 없습니다.", null));
