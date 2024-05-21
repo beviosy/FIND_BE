@@ -19,7 +19,9 @@ public class StoreService {
 
     public Store findStore(Long storeId) {
         Optional<Store> store = storeRepository.findById(storeId);
-        return store.orElseThrow(() -> new EmptyResultDataAccessException("Cannot find any store under the given ID", 1));
+        Store foundStore = store.orElseThrow(() -> new EmptyResultDataAccessException("Cannot find any store under the given ID", 1));
+        foundStore.updateRatingAverage();  // 여기서 updateRatingAverage 메서드 호출
+        return foundStore;
     }
 
     public List<Store> readStores() {
@@ -33,7 +35,7 @@ public class StoreService {
     public Store createStore(StoreCreationRequest request) {
         Store store = new Store();
         BeanUtils.copyProperties(request, store);
-        store.setRatingAverage((float)0.0);
+        store.setRatingAverage((float) 0.0);
         return storeRepository.save(store);
     }
 
