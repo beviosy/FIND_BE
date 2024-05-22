@@ -10,7 +10,6 @@ import java.time.Instant;
 @Setter
 public class ReviewDTO {
     private Long reviewId;
-    private Long userId;
     private String nickname;
     private Long storeId;
     private int rating;
@@ -20,7 +19,6 @@ public class ReviewDTO {
 
     public ReviewDTO(Review review) {
         this.reviewId = review.getReviewId();
-        this.userId = review.getUser().getUserId();
         this.nickname = review.getUser().getNickname();
         this.storeId = review.getStore().getStoreId();
         this.rating = review.getRating();
