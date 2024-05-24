@@ -90,10 +90,26 @@ public class UserController {
             Optional<User> userOptional = userService.findUserByLoginId(username);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
+                UserProfileResponse response = new UserProfileResponse(user, null);
+                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
+    }
+
+    @Operation(summary = "로그인한 사용자의 리뷰 조회", description = "로그인한 사용자의 리뷰를 조회합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/me/reviews")
+    public ResponseEntity<ApiResponse> getUserReviews(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7)) && jwtUtil.isAccessToken(token.substring(7))) {
+            String username = jwtUtil.getUsernameFromToken(token.substring(7));
+            Optional<User> userOptional = userService.findUserByLoginId(username);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getLoginId());
                 List<ReviewDTO> reviewDTOs = reviews.stream().map(ReviewDTO::new).collect(Collectors.toList());
-                UserProfileResponse response = new UserProfileResponse(user, reviewDTOs);
-                return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
+                return ResponseEntity.ok(new ApiResponse(true, "USER_REVIEWS", "사용자 리뷰 조회 성공", reviewDTOs));
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
@@ -137,15 +153,22 @@ public class UserController {
             HttpServletRequest request,
             @RequestBody UpdateUserRequest updateUserRequest) {
         String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ") && jwtUtil.validateToken(token.substring(7)) && jwtUtil.isAccessToken(token.substring(7))) {
-            String username = jwtUtil.getUsernameFromToken(token.substring(7));
-            Optional<User> existingUser = userService.findUserByLoginId(username);
-            if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
-                User updatedUser = userService.updateUser(existingUser.get().getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
-                return ResponseEntity.ok(new ApiResponse(true, "USER_UPDATED", "사용자 정보가 성공적으로 수정되었습니다", updatedUser));
-            }
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "인증되지 않은 사용자입니다", null));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
+
+        token = token.substring(7); // "Bearer " 스킴 제거
+        if (!jwtUtil.validateToken(token) || !jwtUtil.isAccessToken(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "유효하지 않은 토큰입니다", null));
+        }
+
+        String username = jwtUtil.getUsernameFromToken(token);
+        Optional<User> existingUser = userService.findUserByLoginId(username);
+        if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
+            User updatedUser = userService.updateUser(existingUser.get().getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
+            return ResponseEntity.ok(new ApiResponse(true, "USER_UPDATED", "사용자 정보가 성공적으로 수정되었습니다", updatedUser));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "인증되지 않은 사용자입니다", null));
     }
 
     @Operation(summary = "사용자 삭제", description = "로그인한 사용자의 계정을 삭제합니다.")
