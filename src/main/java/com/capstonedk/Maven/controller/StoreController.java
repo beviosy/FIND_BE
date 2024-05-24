@@ -40,12 +40,12 @@ public class StoreController {
             if (categoryId == 0) {
                 List<Store> stores = storeService.readStores();
                 storeInfos = stores.stream()
-                        .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
+                        .map(store -> new StoreInfo(store.getStoreId(), store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
                         .collect(Collectors.toList());
             } else {
                 List<Store> stores = storeService.getStoresByCategoryId(categoryId);
                 storeInfos = stores.stream()
-                        .map(store -> new StoreInfo(store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
+                        .map(store -> new StoreInfo(store.getStoreId(), store.getStorePictureUrl(), store.getStoreName(), store.getInfo()))
                         .collect(Collectors.toList());
             }
             return ResponseEntity.ok(new ApiResponse(true, "STORE_LIST_FOUND", "가게 리스트 조회 성공", storeInfos));
