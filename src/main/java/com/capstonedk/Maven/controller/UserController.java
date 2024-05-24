@@ -164,8 +164,16 @@ public class UserController {
 
         String username = jwtUtil.getUsernameFromToken(token);
         Optional<User> existingUser = userService.findUserByLoginId(username);
-        if (existingUser.isPresent() && existingUser.get().getLoginId().equals(updateUserRequest.getLoginId())) {
-            User updatedUser = userService.updateUser(existingUser.get().getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            if (!user.getLoginId().equals(updateUserRequest.getLoginId())) {
+                // 새로운 로그인 ID의 중복 여부 확인
+                if (userService.isLoginIdDuplicate(updateUserRequest.getLoginId())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "DUPLICATE_LOGIN_ID", "중복된 아이디입니다", null));
+                }
+            }
+
+            User updatedUser = userService.updateUser(user.getUserId(), updateUserRequest.getLoginId(), updateUserRequest.getPassword(), updateUserRequest.getNickname());
             return ResponseEntity.ok(new ApiResponse(true, "USER_UPDATED", "사용자 정보가 성공적으로 수정되었습니다", updatedUser));
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "인증되지 않은 사용자입니다", null));
