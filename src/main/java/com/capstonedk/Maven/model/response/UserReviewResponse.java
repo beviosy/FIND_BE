@@ -9,12 +9,16 @@ import java.util.List;
 
 @Getter
 @Setter
-public class UserProfileResponse {
+public class UserReviewResponse {
     private String loginId;
     private String nickname;
+    private List<ReviewDTO> reviews;
+    private int totalReviews;
 
-    public UserProfileResponse(User user) {
+    public UserReviewResponse(User user, List<ReviewDTO> reviews) {
         this.loginId = user.getLoginId();
         this.nickname = user.getNickname();
+        this.reviews = reviews;
+        this.totalReviews = reviews.size();
     }
 }

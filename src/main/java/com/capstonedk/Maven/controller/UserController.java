@@ -9,6 +9,7 @@ import com.capstonedk.Maven.model.request.UpdateUserRequest;
 import com.capstonedk.Maven.model.response.ApiResponse;
 import com.capstonedk.Maven.model.response.LoginResponse;
 import com.capstonedk.Maven.model.response.UserProfileResponse;
+import com.capstonedk.Maven.model.response.UserReviewResponse;
 import com.capstonedk.Maven.service.ReviewService;
 import com.capstonedk.Maven.service.UserService;
 import com.capstonedk.Maven.util.JwtUtil;
@@ -90,7 +91,7 @@ public class UserController {
             Optional<User> userOptional = userService.findUserByLoginId(username);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-                UserProfileResponse response = new UserProfileResponse(user, null);
+                UserProfileResponse response = new UserProfileResponse(user);
                 return ResponseEntity.ok(new ApiResponse(true, "USER_DETAILS", "사용자 정보 조회 성공", response));
             }
         }
@@ -109,11 +110,13 @@ public class UserController {
                 User user = userOptional.get();
                 List<Review> reviews = reviewService.findReviewsByUserId(user.getLoginId());
                 List<ReviewDTO> reviewDTOs = reviews.stream().map(ReviewDTO::new).collect(Collectors.toList());
-                return ResponseEntity.ok(new ApiResponse(true, "USER_REVIEWS", "사용자 리뷰 조회 성공", reviewDTOs));
+                UserReviewResponse response = new UserReviewResponse(user, reviewDTOs);
+                return ResponseEntity.ok(new ApiResponse(true, "USER_REVIEWS", "사용자 리뷰 조회 성공", response));
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "UNAUTHORIZED", "인증되지 않은 사용자입니다", null));
     }
+
 
     @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     @PostMapping("/refresh-token")
