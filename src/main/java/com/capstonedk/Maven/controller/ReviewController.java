@@ -33,7 +33,7 @@ public class ReviewController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createReview(HttpServletRequest request, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
-        if (token == null || !isValidToken(token)) {
+        if (token == null || !isValidToken(token) || jwtUtil.isAccessTokenExpired(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }
@@ -66,7 +66,7 @@ public class ReviewController {
     @PutMapping("/update/{reviewId}")
     public ResponseEntity<ApiResponse> updateReview(HttpServletRequest request, @PathVariable Long reviewId, @RequestBody ReviewCreationRequest reviewRequest) {
         String token = getToken(request);
-        if (token == null || !isValidToken(token)) {
+        if (token == null || !isValidToken(token) || jwtUtil.isAccessTokenExpired(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }
@@ -92,7 +92,7 @@ public class ReviewController {
     @DeleteMapping("/delete/{reviewId}")
     public ResponseEntity<ApiResponse> deleteReview(HttpServletRequest request, @PathVariable Long reviewId) {
         String token = getToken(request);
-        if (token == null || !isValidToken(token)) {
+        if (token == null || !isValidToken(token) || jwtUtil.isAccessTokenExpired(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(false, "UNAUTHORIZED", "유효한 엑세스 토큰이 필요합니다.", null));
         }

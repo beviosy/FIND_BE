@@ -108,4 +108,24 @@ public class JwtUtil {
         long expirationTime = expirationDate.getTime() - claims.getIssuedAt().getTime();
         return expirationTime == accessTokenExpiration;
     }
+
+    public boolean isAccessTokenExpired(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        Date expirationDate = claims.getExpiration();
+        return expirationDate.before(new Date());
+    }
+
+    public boolean isRefreshTokenExpired(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        Date expirationDate = claims.getExpiration();
+        return expirationDate.before(new Date());
+    }
 }

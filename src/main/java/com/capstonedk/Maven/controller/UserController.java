@@ -71,6 +71,9 @@ public class UserController {
     public ResponseEntity<ApiResponse> loginUser(HttpServletRequest request, @RequestBody LoginRequest loginRequest) {
         try {
             LoginResponse response = userService.login(loginRequest);
+            if (jwtUtil.isAccessTokenExpired(response.getResult().getAccessToken())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "ACCESS_TOKEN_EXPIRED", "액세스 토큰이 만료되었습니다.", null));
+            }
             return ResponseEntity.ok()
                     .header("Authorization", "Bearer " + response.getResult().getAccessToken())
                     .header("Refresh-Token", response.getResult().getRefreshToken())
@@ -135,6 +138,11 @@ public class UserController {
                     .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "유효하지 않은 리프레시 토큰입니다.", null));
         }
 
+        if (jwtUtil.isRefreshTokenExpired(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "TOKEN_REFRESH_FAILED", "리프레시 토큰이 만료되었습니다. 액세스 토큰을 재발급할 수 없습니다.", null));
+        }
+
         try {
             String newAccessToken = jwtUtil.generateAccessTokenFromRefreshToken(refreshToken);
             String oldAccessToken = request.getHeader("Old-Authorization");
@@ -161,8 +169,8 @@ public class UserController {
         }
 
         token = token.substring(7); // "Bearer " 스킴 제거
-        if (!jwtUtil.validateToken(token) || !jwtUtil.isAccessToken(token)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "유효하지 않은 토큰입니다", null));
+        if (!jwtUtil.validateToken(token) || jwtUtil.isAccessTokenExpired(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "ACCESS_TOKEN_EXPIRED", "액세스 토큰이 만료되었습니다.", null));
         }
 
         String username = jwtUtil.getUsernameFromToken(token);
