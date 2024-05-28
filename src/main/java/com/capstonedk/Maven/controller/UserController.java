@@ -169,8 +169,8 @@ public class UserController {
         }
 
         token = token.substring(7); // "Bearer " 스킴 제거
-        if (!jwtUtil.validateToken(token) || jwtUtil.isAccessTokenExpired(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(false, "ACCESS_TOKEN_EXPIRED", "액세스 토큰이 만료되었습니다.", null));
+        if (!jwtUtil.validateToken(token) || !jwtUtil.isAccessToken(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "FORBIDDEN", "유효하지 않은 토큰입니다", null));
         }
 
         String username = jwtUtil.getUsernameFromToken(token);
