@@ -12,6 +12,7 @@ public class ReviewDTO {
     private Long reviewId;
     private String nickname;
     private Long storeId;
+    private String StoreName;
     private int rating;
     private String content;
     private Instant createdDate;
@@ -21,6 +22,7 @@ public class ReviewDTO {
         this.reviewId = review.getReviewId();
         this.nickname = review.getUser().getNickname();
         this.storeId = review.getStore().getStoreId();
+        this.StoreName = review.getStore().getStoreName();
         this.rating = review.getRating();
         this.content = review.getContent();
         this.createdDate = review.getCreatedDate();
